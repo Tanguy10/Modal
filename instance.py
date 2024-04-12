@@ -10,7 +10,7 @@ def offline(l=5, T=1000):
     while t < T:
         d = expon.rvs() #Pour l'instant lambda = 1
         t += d #On avance dans le temps
-        etage = randint.rvs(0, l+1) #L'étage de la requête
+        etage = randint.rvs(1, l+1) #L'étage de la requête, on suppose que l'étage est non nul pour simplifier
         b = bernoulli.rvs(0.5) #Permet de choisir entre entrée ou sortie
         if b==0 :
             requests.append((t, etage, 'e'))
