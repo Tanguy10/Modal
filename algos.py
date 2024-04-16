@@ -27,6 +27,7 @@ def fifo(l, requests, omega, tau):
             etage = r[1]
         else :
             temps += omega*abs(etage - r[1]) + omega*r[1] + 2*tau
+            etage = 0
     return temps 
 
 
