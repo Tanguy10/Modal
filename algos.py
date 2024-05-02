@@ -1,5 +1,6 @@
 from simulateur import *
 from instance import *
+import networkx as nx
 
 
 def resolution_statique(l, requests, omega, tau):
