@@ -17,3 +17,16 @@ def offline(l=5, T=1000):
         else :
             requests.append((t, etage, 's'))
     return requests
+
+def online(l,T,lamda):
+    size = 1000  # Nombre de tirages
+    # Tirer de la distribution de Poisson
+    tirages_poisson = np.random.poisson(lamda, size)
+    tirages_bernoulli =  bernoulli.rvs(0.5, size=size)
+    for i in range(size):
+        if tirages_bernoulli[i]==0 :
+            tirages_bernoulli[i] = 'e'
+        else : 
+            tirages_bernoulli[i] = 's'
+    return tirages_bernoulli,tirages_poisson
+
