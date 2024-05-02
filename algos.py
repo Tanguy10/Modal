@@ -1,4 +1,5 @@
-
+from simulateur import *
+from instance import *
 
 def resolution_statique(l, requests, omega, tau):
     """Résolution du problème offline"""
@@ -17,18 +18,17 @@ def resolution_statique(l, requests, omega, tau):
     # Les arêtes sont (i,j,l) -> (i+1, j, s_{i+1}) et (i,j,l) -> (i, j+1, 0)
 
 
-def fifo(l, requests, omega, tau): 
-    etage = 0 #Etage de l'ascenseur avant de commencer
-    temps = 0
-    for r in requests :
-        temps = max(r[0], temps) # On doit attendre la prochaine requête si elle n'est pas encore arrivée
-        if r[2] == 'e' :
-            temps += omega*etage + omega*r[1] + 2*tau
-            etage = r[1]
-        else :
-            temps += omega*abs(etage - r[1]) + omega*r[1] + 2*tau
-            etage = 0
-    return temps 
+def fifo(sys): 
+    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
+    request = sys.queue[0]
+    if request.sr == 's' :
+        etage = request.etage
+        temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
+    else :
+        etage = 0
+        temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
+    return etage, temps
+
 
 
 
