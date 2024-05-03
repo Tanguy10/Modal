@@ -1,4 +1,7 @@
-from simulateur import *
+LAMBDA = 1 #Sert pour la loi exponentielle
+L = 10 #Nombre d'étage
+OMEGA = 1 #Temps mis par l'ascenseur pour passer d'un étage au suivant
+TAU = 1 #Temps mis par l'ascenseur pour charger ou décharger un colis
 from instance import *
 import networkx as nx
 
@@ -59,8 +62,3 @@ def fifo(sys):
         etage = 0
         temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
     return etage, temps
-
-
-
-
-
