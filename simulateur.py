@@ -2,22 +2,18 @@ import heapq
 from scipy.stats import randint, expon, bernoulli
 from algos import *
 
-LAMBDA = 1 #Sert pour la loi exponentielle
-L = 10 #Nombre d'étage
-OMEGA = 1 #Temps mis par l'ascenseur pour passer d'un étage au suivant
-TAU = 1 #Temps mis par l'ascenseur pour charger ou décharger un colis
-
 class Ascenseur(object):
     def __init__(self):
         self.idle = True
-        self.etage = randint(0, L+1)
+        self.etage = randint.rvs(0, L+1)
+        # self.etage = 2
 
 class System(object):
     def __init__(self):
         self.echeancier = []
         self.queue = [] #File d'attente
         self.ascenseur = Ascenseur() 
-
+        
 class Request(object):
     def __init__(self, i, sr, etage):
         self.id = i #Identifiant de la requête
@@ -51,19 +47,19 @@ class Event_arrival(Event):
         d = expon.rvs(LAMBDA)
         e = randint.rvs(1, L+1)
         if b==0:
-            next = Event_arrival(self.time+d, Request(self.request+1,'s', e))
+            next = Event_arrival(self.time+d, Request(self.request.id+1,'s', e))
         else :
-            next = Event_arrival(self.time+d, Request(self.request+1,'r', e))
+            next = Event_arrival(self.time+d, Request(self.request.id+1,'r', e))
         heapq.heappush(sys.echeancier, (next.time, next)) 
 
         #Création de l'évènement satisfaction de la requête
         if sys.ascenseur.idle :
-            if self.sr == 's':
-                temps_satisfaction = sys.ascenseur.etage + self.request.etage
+            if self.request.sr == 's':
+                temps_satisfaction = (sys.ascenseur.etage + self.request.etage)*OMEGA + 2*TAU
                 sys.ascenseur.idle = False
                 sys.ascenseur.etage = self.request.etage
             else :
-                temps_satisfaction = abs(sys.ascenseur.etage - self.request.etage) + self.request.etage
+                temps_satisfaction = (abs(sys.ascenseur.etage - self.request.etage) + self.request.etage)*OMEGA +2*TAU
                 sys.ascenseur.idle = False
                 sys.ascenseur.etage = 0
             satisfaction = Event_satisfaction(self.time+temps_satisfaction, self.request.id)
@@ -77,7 +73,7 @@ class Event_satisfaction(Event):
         self.time = time
         self.type = "satisfaction"
         self.id = i
-    
+        
     def action(self, sys):
         if sys.queue == []:
             sys.ascenseur.idle = True
@@ -87,6 +83,17 @@ class Event_satisfaction(Event):
             request = sys.queue.pop(0)
             satisfaction = Event_satisfaction(self.time+temps, request.id)
             heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction))
+        
 
+sys = System()
+e_fin = Event_end(100)
+heapq.heappush(sys.echeancier, (e_fin.time, e_fin))
 
+request = Request(0, 's', 2)
+e_debut = Event_arrival(0, request)
+heapq.heappush(sys.echeancier,(e_debut.time, e_debut))
+
+while sys.echeancier[0][1].type != "fin":
+        (time, e) = heapq.heappop(sys.echeancier)
+        e.action(sys)
 
