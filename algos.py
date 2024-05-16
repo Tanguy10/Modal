@@ -59,3 +59,28 @@ def fifo(sys):
         etage = 0
         temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
     return etage, temps #Etage final et temps d'exécution
+
+
+def ignore(sys):
+    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
+    from simulateur import L, TAU, OMEGA
+
+    # On appelle request_list les requetes oronnées 
+    i = 0
+    
+    while i < len(request_list):
+        request = request_list[i]
+        if request.sr == 's' :
+            etage = request.etage
+            temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
+        else :
+            etage = 0
+            temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
+        i += 1
+    return etage, temps #Etage final et temps d'exécution
+
+
+def replan(sys):
+    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
+    from simulateur import L, TAU, OMEGA
+    request = 
