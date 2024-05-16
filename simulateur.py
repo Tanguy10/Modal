@@ -108,7 +108,7 @@ for i in range(NBR_RUNS) :
     heapq.heappush(sys.echeancier,(e_debut.time, e_debut))
 
     while sys.echeancier[0][1].type != "fin": #Tant qu'on n'est pas à la fin
-        (time, e) = heapq.heappop(sys.echeancier) 
+        time, e = heapq.heappop(sys.echeancier) 
         e.action(sys)
         if e.type == 'satisfaction':
             waiting_times_requests[e.id] += e.time # Temps d'attente de la requête
