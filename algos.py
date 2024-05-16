@@ -2,7 +2,7 @@ import instance
 import networkx as nx
 
 
-def resolution_statique(l, requests, omega, tau):
+def resolution_statique(l, requests, omega, tau, etage_dep):
     """Résolution du problème offline en version statique"""
     entrees, sorties = [],[]
     for r in requests :
@@ -28,10 +28,10 @@ def resolution_statique(l, requests, omega, tau):
                 if j+1 < nb_sorties : 
                     G.add_edge((i,j,k),(i,j+1,0), weight = 2*tau + omega * (abs(sorties[j]-k)+sorties[j]) )
 
-    # Résolvons désormais le problème du plus court chemin entre le noeud (0,0,0) et le noeud (nb_sorties,nb_entrees,)
+    # Résolvons désormais le problème du plus court chemin entre le noeud (0,0,etage_dep) et le noeud (nb_sorties,nb_entrees,)
     # nx.dijkstra_path_length(G,source = (0,0,0), target = (nb_sorties,nb_entrees,))
     # nx.multi_source_dijkstra_path_length()
-    longueurs, chemins = nx.single_source_dijkstra(G, source = (0,0,0))
+    longueurs, chemins = nx.single_source_dijkstra(G, source = (0,0,etage_dep))
 
     # Noeuds d'arrivée d'intérêt
     noeuds_arrivee = [(nb_entrees,nb_sorties,k) for k in range(l+1)]
@@ -43,9 +43,15 @@ def resolution_statique(l, requests, omega, tau):
         if temps_sortie_min>longueurs[arrivee] :
             temps_sortie_min = longueurs[arrivee]
             noeud_sortie_min = noeuds_arrivee[arrivee]
-
+    # Renvoyons une liste qui donne les requêtes qui ont été traitées pour le temps optimale
+    requetes_accomplies=[]
+    for i in range(1,len(chemins)):
+        if chemins[i][2]==0:
+            requetes_accomplies.append('s')
+        else :
+            requetes_accomplies.append('e')
     # On renvoie le temps mis et l'étage à l'arrivée 
-    return temps_sortie_min, noeud_sortie_min[2]
+    return temps_sortie_min, noeud_sortie_min[2], requetes_accomplies
 
 
 def fifo(sys): 
@@ -60,35 +66,10 @@ def fifo(sys):
         temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
     return etage, temps #Etage final et temps d'exécution
 
-
-def ignore(sys):
+def replan(sys): 
     """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
     from simulateur import L, TAU, OMEGA
-
-    temps = 0
-    # On appelle request_list les requetes oronnées 
-    i = 0
-    
-    while i < len(request_list):
-        request = request_list[i]
-        if request.sr == 's' :
-            etage = request.etage
-            temps += OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
-        else :
-            etage = 0
-            temps += OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
-        i += 1
-    return etage, temps #Etage final et temps d'exécution
-
-
-def replan(sys):
-    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
-    from simulateur import L, TAU, OMEGA
-
-    # On appelle request_list les requetes oronnées 
-    # request_list = 
-    request = request_list[0] # Requête à traiter
-    
+    request = sys.queue[0] # Requête à traiter
     if request.sr == 's' :
         etage = request.etage
         temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
