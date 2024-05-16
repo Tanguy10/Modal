@@ -70,7 +70,7 @@ def replan(sys):
     """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
     from simulateur import L, TAU, OMEGA
     
-    request = resolution_statique(l, sys.request, OMEGA, TAU, etage_dep)[1] # Requête à traiter
+    request = resolution_statique(l, sys.queue, OMEGA, TAU, sys.ascenseur.etage)[1] # Requête à traiter
     if request.sr == 's' :
         etage = request.etage
         temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
