@@ -1,8 +1,4 @@
-LAMBDA = 1 #Sert pour la loi exponentielle
-L = 10 #Nombre d'étage
-OMEGA = 1 #Temps mis par l'ascenseur pour passer d'un étage au suivant
-TAU = 1 #Temps mis par l'ascenseur pour charger ou décharger un colis
-from instance import *
+import instance
 import networkx as nx
 
 
@@ -54,11 +50,12 @@ def resolution_statique(l, requests, omega, tau):
 
 def fifo(sys): 
     """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
-    request = sys.queue[0]
+    from simulateur import L, TAU, OMEGA
+    request = sys.queue[0] # Requête à traiter
     if request.sr == 's' :
         etage = request.etage
         temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
     else :
         etage = 0
         temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
-    return etage, temps
+    return etage, temps #Etage final et temps d'exécution

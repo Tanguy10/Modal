@@ -1,6 +1,13 @@
 import heapq
 from scipy.stats import randint, expon, bernoulli
-from algos import *
+import algos
+from instance import create_request
+from statistics import mean
+
+LAMBDA = 1 #Sert pour la loi exponentielle
+L = 10 #Nombre d'étages
+OMEGA = 1 #Temps mis par l'ascenseur pour passer d'un étage au suivant
+TAU = 1 #Temps mis par l'ascenseur pour charger ou décharger un colis
 
 class Ascenseur(object):
     def __init__(self):
@@ -17,8 +24,8 @@ class System(object):
 class Request(object):
     def __init__(self, i, sr, etage):
         self.id = i #Identifiant de la requête
-        self.sr = sr
-        self.etage = etage
+        self.sr = sr #'s' si stockage, 'r' si retrieval
+        self.etage = etage #etage correspondant
 
 class Event(object):
     def __init__(self, time) :
@@ -43,16 +50,12 @@ class Event_arrival(Event):
         sys.queue.append(self.request) #Ajout à la file d'attente
 
         #Création d'un nouvel évènement d'arrivée d'une requête
-        b = bernoulli.rvs(0.5)
-        d = expon.rvs(LAMBDA)
-        e = randint.rvs(1, L+1)
-        if b==0:
-            next = Event_arrival(self.time+d, Request(self.request.id+1,'s', e))
-        else :
-            next = Event_arrival(self.time+d, Request(self.request.id+1,'r', e))
+        d = expon.rvs(LAMBDA) # Temps d'attente pour la prochaine requête
+        next_request = create_request(self.request.id + 1) # Prochaine requête
+        next = Event_arrival(self.time+d, next_request) # Evènement associé
         heapq.heappush(sys.echeancier, (next.time, next)) 
 
-        #Création de l'évènement satisfaction de la requête
+        #Création de l'évènement satisfaction de la requête dans le cas où l'ascenseur est libre
         if sys.ascenseur.idle :
             if self.request.sr == 's':
                 temps_satisfaction = (sys.ascenseur.etage + self.request.etage)*OMEGA + 2*TAU
@@ -72,28 +75,49 @@ class Event_satisfaction(Event):
     def __init__(self, time, i):
         self.time = time
         self.type = "satisfaction"
-        self.id = i
+        self.id = i #Identifiant de la requête satisfaite
         
     def action(self, sys):
-        if sys.queue == []:
-            sys.ascenseur.idle = True
-        else :
-            etage, temps = fifo(sys)
-            sys.ascenseur.etage = etage
+        if sys.queue == []: #Si la file d'attente est vide, l'ascenseur est libre
+            sys.ascenseur.idle = True 
+        else : #Sinon, on exécute un algo
+            sys.ascenseur.idle = False 
+            etage, temps = algos.fifo(sys)
             request = sys.queue.pop(0)
+
+            sys.ascenseur.etage = etage #Ascenseur mis en position finale
             satisfaction = Event_satisfaction(self.time+temps, request.id)
             heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction))
         
 
-sys = System()
-e_fin = Event_end(100)
-heapq.heappush(sys.echeancier, (e_fin.time, e_fin))
 
-request = Request(0, 's', 2)
-e_debut = Event_arrival(0, request)
-heapq.heappush(sys.echeancier,(e_debut.time, e_debut))
+TOTAL_DURATION=100 #Temps d'un run
+NBR_RUNS = 10
 
-while sys.echeancier[0][1].type != "fin":
-        (time, e) = heapq.heappop(sys.echeancier)
+waiting_times_run = []
+for i in range(NBR_RUNS) :
+    # random.seed(i) 
+
+    sys = System() #Création du système
+    e_fin = Event_end(TOTAL_DURATION) # Evènement de fin
+    heapq.heappush(sys.echeancier, (e_fin.time, e_fin)) #Ajout de la fin à l'échéancier
+
+    request = create_request(0) #Première requête
+    waiting_times_requests = [0]
+    e_debut = Event_arrival(0, request) #Début de la simulation 
+    heapq.heappush(sys.echeancier,(e_debut.time, e_debut))
+
+    while sys.echeancier[0][1].type != "fin": #Tant qu'on n'est pas à la fin
+        (time, e) = heapq.heappop(sys.echeancier) 
         e.action(sys)
-
+        if e.type == 'satisfaction':
+            waiting_times_requests[e.id] += e.time # Temps d'attente de la requête
+        elif e.type == 'arrival':
+            waiting_times_requests.append(-e.time)
+    # print(waiting_times_requests)
+    
+    i = 0
+    while waiting_times_requests[i] >=0 :
+        i+= 1
+    waiting_times_run.append(mean(waiting_times_requests[:i]))
+print(mean(waiting_times_run))
