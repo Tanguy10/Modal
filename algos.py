@@ -55,16 +55,24 @@ def resolution_statique(l, requests, omega, tau, etage_dep):
 
 
 def fifo(sys): 
-    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
-    from simulateur import L, TAU, OMEGA
-    request = sys.queue[0] # Requête à traiter
+    """Renvoie l'étage de la requête à traiter"""    
+    # On détermine les requêtes pouvant être choisis
+    possible_requests = []
+    for q in sys.queues:
+        if q != []:
+            possible_requests.append(q[0])
+    # Puis celle qui est arrivée en premier
+    request = possible_requests[0]
+    for r in possible_requests:
+        if request.arrival > r.arrival:
+            request = r
+    
     if request.sr == 's' :
-        etage = request.etage
-        temps = OMEGA*(sys.ascenseur.etage+request.etage) + 2*TAU
+        return [0] 
     else :
-        etage = 0
-        temps = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
-    return etage, temps #Etage final et temps d'exécution
+        return [request.etage] 
+
+    
 
 def replan(sys): 
     """Renvoie l'étage de fin et le temps mis pour traiter la requête"""

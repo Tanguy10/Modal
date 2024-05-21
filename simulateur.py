@@ -3,8 +3,9 @@ from scipy.stats import randint, expon
 import algos
 from instance import create_request
 from statistics import mean
+import matplotlib.pyplot as plt
 
-LAMBDA = 1  # Sert pour la loi exponentielle
+LAMBDA = 1 # Sert pour la loi exponentielle
 L = 10  # Nombre d'étages
 OMEGA = 1  # Temps mis par l'ascenseur pour passer d'un étage au suivant
 TAU = 1  # Temps mis par l'ascenseur pour charger ou décharger un colis
@@ -17,7 +18,8 @@ class Ascenseur(object):
 class System(object):
     def __init__(self):
         self.echeancier = []
-        self.queue = []  # File d'attente
+        self.requests = [] # La liste des requêtes
+        self.queues = [[] for i in range(L+1)]  # Files d'attente, queues[0] est la file des colis voulant rentrer, queues[i] est la file des colis voulant sortir de l'étage i
         self.ascenseur = Ascenseur()
 
 class Request(object):
@@ -25,6 +27,8 @@ class Request(object):
         self.id = i  # Identifiant de la requête
         self.sr = sr  # 's' si stockage, 'r' si retrieval
         self.etage = etage  # étage correspondant
+        self.arrival = -1 # Temps d'arrivée, vaut -1 initialement
+        self.satisfaction_time = -1 # Temps de satisfaction, vaut -1 tant que la requête n'est pas satisfaite
 
 class Event(object):
     def __init__(self, time):
@@ -42,29 +46,36 @@ class Event_end(Event):
 
 class Event_arrival(Event):
     """Arrivée d'une requête"""
-    def __init__(self, time, request):
+    def __init__(self, time):
         super().__init__(time)
         self.type = "arrival"
-        self.request = request
 
     def action(self, sys):
-        sys.queue.append(self.request)  # Ajout à la file d'attente
+        request = sys.requests[-1] # Dernière requête 
+        request.arrival = self.time # On actualise le temps d'arrivée
+        sys.requests.append(request)  # Ajout à la file d'attente
         d = expon.rvs(LAMBDA)  # Temps d'attente pour la prochaine requête
-        next_request = create_request(self.request.id + 1)  # Prochaine requête
-        next = Event_arrival(self.time + d, next_request)  # Evénement associé
-        heapq.heappush(sys.echeancier, (next.time, next))
+        next_request = create_request(len(sys.requests))  # Prochaine requête
+        sys.requests.append(next_request) # Ajout de cette requête à la liste des requêtes
+        next = Event_arrival(self.time + d)  # Evénement associé
+        heapq.heappush(sys.echeancier, (next.time, next)) # Prochaine arrivée dans l'échéancier
 
         if sys.ascenseur.idle:
-            if self.request.sr == 's':
-                temps_satisfaction = (sys.ascenseur.etage + self.request.etage) * OMEGA + 2 * TAU
+            if request.sr == 's':
+                temps_satisfaction = (sys.ascenseur.etage + request.etage) * OMEGA + 2 * TAU
                 sys.ascenseur.idle = False
-                sys.ascenseur.etage = self.request.etage
+                sys.ascenseur.etage = request.etage
             else:
-                temps_satisfaction = (abs(sys.ascenseur.etage - self.request.etage) + self.request.etage) * OMEGA + 2 * TAU
+                temps_satisfaction = (abs(sys.ascenseur.etage - request.etage) + request.etage) * OMEGA + 2 * TAU
                 sys.ascenseur.idle = False
                 sys.ascenseur.etage = 0
-            satisfaction = Event_satisfaction(self.time + temps_satisfaction, self.request.id)
-            heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction))
+            satisfaction = Event_satisfaction(self.time + temps_satisfaction, request.id)
+            heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction)) # Satisfaction de la requête
+        else :
+            if request.sr == 's':
+                sys.queues[0].append(request) # Ajout à la file d'attente
+            else :
+                sys.queues[request.etage].append(request)
 
 class Event_satisfaction(Event):
     """Satisfaction d'une requête"""
@@ -74,41 +85,59 @@ class Event_satisfaction(Event):
         self.id = i  # Identifiant de la requête satisfaite
 
     def action(self, sys):
-        if not sys.queue:  # Si la file d'attente est vide, l'ascenseur est libre
-            sys.ascenseur.idle = True
+        sys.requests[self.id].satisfaction_time = self.time
+        # On détermine si les files d'attente sont vides 
+        if sum([len(q) for q in sys.queues]) == 0: 
+            sys.ascenseur.idle = True # Dans ce cas l'ascenseur est libre
         else:  # Sinon, on exécute un algo
             sys.ascenseur.idle = False
-            etage, temps = algos.fifo(sys)
-            request = sys.queue.pop(0)
-            sys.ascenseur.etage = etage  # Ascenseur mis en position finale
-            satisfaction = Event_satisfaction(self.time + temps, request.id)
-            heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction))
+            etage_courant = sys.ascenseur.etage
+            indices = algos.fifo(sys) # Suite des requêtes à traiter
+            for i in indices :
+                request = sys.queues[i].pop(0)
+                if request.sr == 's':
+                    t = OMEGA*(etage_courant + request.etage) + 2*TAU
+                    etage_courant =  request.etage
+                else :
+                    t = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
+                    etage_courant = 0 
+                satisfaction = Event_satisfaction(self.time + t, request.id) 
+                heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction)) # Ajout de la satisfaction à l'échéancier
+            sys.ascenseur.etage = etage_courant  # Ascenseur mis en position finale
+            
+            
+TOTAL_DURATION = 4000  # Temps d'un run
+TRANSIENT_DURATION = 1000 # Régime transitoire
+NBR_RUNS = 5
 
-TOTAL_DURATION = 100  # Temps d'un run
-NBR_RUNS = 10
-
-waiting_times_run = []
+sojourn_times_run = []
 for i in range(NBR_RUNS):
     sys = System()  # Création du système
     e_fin = Event_end(TOTAL_DURATION)  # Evénement de fin
     heapq.heappush(sys.echeancier, (e_fin.time, e_fin))  # Ajout de la fin à l'échéancier
 
     request = create_request(0)  # Première requête
-    waiting_times_requests = [0]
-    e_debut = Event_arrival(0, request)  # Début de la simulation
+    sys.requests.append(request)
+    e_debut = Event_arrival(0)  # Début de la simulation
     heapq.heappush(sys.echeancier, (e_debut.time, e_debut))
 
     while sys.echeancier[0][1].type != "fin":  # Tant qu'on n'est pas à la fin
-        time, e = heapq.heappop(sys.echeancier)
+        (time, e) = heapq.heappop(sys.echeancier)
         e.action(sys)
-        if e.type == 'satisfaction':
-            waiting_times_requests[e.id] += e.time  # Temps d'attente de la requête
-        elif e.type == 'arrival':
-            waiting_times_requests.append(-e.time)
+        # if e.type == 'satisfaction':
+        #     waiting_times_requests[e.id] += e.time  # Temps d'attente de la requête
+        # elif e.type == 'arrival':
+        #     waiting_times_requests.append(-e.time)
     # print(waiting_times_requests)
+    sojourn_times_requests = [] # Temps de séjour par requête
+    sojourn_mean = []
+    for r in sys.requests:
+        if r.satisfaction_time != -1:
+            sojourn_times_requests.append(r.satisfaction_time - r.arrival)
+            sojourn_mean.append(sojourn_times_requests[-1]/(len(sojourn_mean)+1))
+    sojourn_times_run.append(sojourn_mean[50:])
 
-    i = 0
-    while waiting_times_requests[i] >= 0:
-        i += 1
-    waiting_times_run.append(mean(waiting_times_requests[:i]))
-print(mean(waiting_times_run))
+for s in sojourn_times_run:
+    plt.plot(s)
+plt.show()
+    
