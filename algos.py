@@ -1,5 +1,6 @@
 import instance
 import networkx as nx
+import itertools
 
 
 def resolution_statique(requests, sys):
@@ -22,11 +23,14 @@ def resolution_statique(requests, sys):
 
     # Les états sont [i,j_1, ..., j_L,k] avec i les requêtes d'entrées traitées, j_i les requêtes de sorties de l'étage i 
     # et k l'étage où est l'ascenseur après la requête qu'il vient de traiter
-    for k in range(L+1):
-        for j in range(nb_sorties):
-            for i in range(nb_entrees) :
-                G.add_nodes((i,j,k))
-    # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}) et (i,j,l) -> (i, j+1, 0)
+    states = itertools.product(range(nb_entrees), *(range(nb_sorties[i]) for i in range(L)), range(L+1))
+    for state in states :
+        G.add_node(state)
+
+
+
+    # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}] 
+    # ou [i, j_1, ..., j_n, ..., j_L,l] -> [i, j_1, ..., j_{n}+1, ..., j_L, 0]
     for k in range(l+1):
         for j in range(nb_sorties):
             for i in range(nb_entrees) :
