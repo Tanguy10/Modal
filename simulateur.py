@@ -93,7 +93,7 @@ class Event_satisfaction(Event):
             sys.ascenseur.idle = False
             etage_courant = sys.ascenseur.etage
             temps_courant = self.time
-            indices = algos.fifo(sys) # Suite des requêtes à traiter
+            indices = algos.replan(sys) # Suite des requêtes à traiter
             for i in indices :
                 request = sys.queues[i].pop(0)
                 if request.sr == 's':
@@ -107,9 +107,9 @@ class Event_satisfaction(Event):
             sys.ascenseur.etage = etage_courant  # Ascenseur mis en position finale
             
             
-TOTAL_DURATION = 5000  # Temps d'un run
+TOTAL_DURATION = 1000  # Temps d'un run
 TRANSIENT_DURATION = 1000 # Régime transitoire
-NBR_RUNS = 5
+NBR_RUNS = 1
 
 
 
