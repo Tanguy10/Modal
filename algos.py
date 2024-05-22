@@ -26,7 +26,7 @@ def resolution_statique(requests, sys):
         for j in range(nb_sorties):
             for i in range(nb_entrees) :
                 G.add_nodes((i,j,k))
-    # Les arêtes sont (i,j,l) -> (i+1, j, s_{i+1}) et (i,j,l) -> (i, j+1, 0)
+    # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}) et (i,j,l) -> (i, j+1, 0)
     for k in range(l+1):
         for j in range(nb_sorties):
             for i in range(nb_entrees) :

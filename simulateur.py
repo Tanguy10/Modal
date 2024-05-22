@@ -53,8 +53,8 @@ class Event_arrival(Event):
     def action(self, sys):
         request = sys.requests[-1] # Dernière requête 
         request.arrival = self.time # On actualise le temps d'arrivée
-        sys.requests.append(request)  # Ajout à la file d'attente
-        d = expon.rvs(scale= 1/LAMBDA)  # Temps d'attente pour la prochaine requête
+        # sys.requests.append(request)  # Ajout à la file d'attente
+        d = expon.rvs(scale = 1/LAMBDA)  # Temps d'attente pour la prochaine requête
         next_request = create_request(len(sys.requests))  # Prochaine requête
         sys.requests.append(next_request) # Ajout de cette requête à la liste des requêtes
         next = Event_arrival(self.time + d)  # Evénement associé
@@ -92,23 +92,26 @@ class Event_satisfaction(Event):
         else:  # Sinon, on exécute un algo
             sys.ascenseur.idle = False
             etage_courant = sys.ascenseur.etage
+            temps_courant = self.time
             indices = algos.fifo(sys) # Suite des requêtes à traiter
             for i in indices :
                 request = sys.queues[i].pop(0)
                 if request.sr == 's':
-                    t = OMEGA*(etage_courant + request.etage) + 2*TAU
+                    temps_courant += OMEGA*(etage_courant + request.etage) + 2*TAU
                     etage_courant =  request.etage
                 else :
-                    t = OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
+                    temps_courant += OMEGA*(abs(sys.ascenseur.etage - request.etage) + request.etage) + 2*TAU
                     etage_courant = 0 
-                satisfaction = Event_satisfaction(self.time + t, request.id) 
+                satisfaction = Event_satisfaction(temps_courant, request.id) 
                 heapq.heappush(sys.echeancier, (satisfaction.time, satisfaction)) # Ajout de la satisfaction à l'échéancier
             sys.ascenseur.etage = etage_courant  # Ascenseur mis en position finale
             
             
-TOTAL_DURATION = 4000  # Temps d'un run
+TOTAL_DURATION = 5000  # Temps d'un run
 TRANSIENT_DURATION = 1000 # Régime transitoire
 NBR_RUNS = 5
+
+
 
 sojourn_times_run = []
 for i in range(NBR_RUNS):
@@ -124,11 +127,7 @@ for i in range(NBR_RUNS):
     while sys.echeancier[0][1].type != "fin":  # Tant qu'on n'est pas à la fin
         (time, e) = heapq.heappop(sys.echeancier)
         e.action(sys)
-        # if e.type == 'satisfaction':
-        #     waiting_times_requests[e.id] += e.time  # Temps d'attente de la requête
-        # elif e.type == 'arrival':
-        #     waiting_times_requests.append(-e.time)
-    # print(waiting_times_requests)
+
     sojourn_times_requests = [] # Temps de séjour par requête
     sojourn_mean = []
     for r in sys.requests:
@@ -137,8 +136,11 @@ for i in range(NBR_RUNS):
             sojourn_mean.append(sum(sojourn_times_requests)/(len(sojourn_mean)+1))
     sojourn_times_run.append(sojourn_mean)
 
+
+plt.clf()
 for s in sojourn_times_run:
     plt.plot(s)
-plt.show()
+
+plt.savefig('result.png')
 
     
