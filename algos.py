@@ -2,20 +2,27 @@ import instance
 import networkx as nx
 
 
-def resolution_statique(l, requests, omega, tau, etage_dep):
+def resolution_statique(requests, sys):
     """Résolution du problème offline en version statique"""
-    entrees, sorties = [],[]
-    for r in requests :
-        if r[2] == 'e': 
-            entrees.append(r[1]) #r[0] ne nous intéresse pas pour le problème statique
-        else :
-            sorties.append(r[1])
-    nb_entrees, nb_sorties = len(entrees), len(sorties)
+    from simulateur import L, TAU, OMEGA 
+    etage_dep = sys.ascenseur.etage
+    nb_entrees = len(sys.queues[0])
+    nb_sorties = [len(sys.queues[i]) for i in range(1, L+1)]
+
+    # entrees, sorties = [],[]
+    # for r in requests :
+    #     if r[2] == 'e': 
+    #         entrees.append(r[1]) #r[0] ne nous intéresse pas pour le problème statique
+    #     else :
+    #         sorties.append(r[1])
+    # nb_entrees, nb_sorties = len(entrees), len(sorties)
+
+    # On crée un graphe, la résolution statique est un problème de plus court chemin
     G = nx.Digraph()
 
-    # Les états sont (i,j,k) avec i les requêtes d'entrées traitées, j les requêtes de sorties
+    # Les états sont [i,j_1, ..., j_L,k] avec i les requêtes d'entrées traitées, j_i les requêtes de sorties de l'étage i 
     # et k l'étage où est l'ascenseur après la requête qu'il vient de traiter
-    for k in range(l+1):
+    for k in range(L+1):
         for j in range(nb_sorties):
             for i in range(nb_entrees) :
                 G.add_nodes((i,j,k))
@@ -24,9 +31,9 @@ def resolution_statique(l, requests, omega, tau, etage_dep):
         for j in range(nb_sorties):
             for i in range(nb_entrees) :
                 if i+1<nb_entrees:
-                    G.add_edge((i,j,k),(i+1, j, entrees[i]), weight = 2*tau + omega * (k + entrees[i]))
+                    G.add_edge((i,j,k),(i+1, j, entrees[i]), weight = 2*TAU + OMEGA * (k + entrees[i]))
                 if j+1 < nb_sorties : 
-                    G.add_edge((i,j,k),(i,j+1,0), weight = 2*tau + omega * (abs(sorties[j]-k)+sorties[j]) )
+                    G.add_edge((i,j,k),(i,j+1,0), weight = 2*TAU + OMEGA * (abs(sorties[j]-k)+sorties[j]) )
 
     # Résolvons désormais le problème du plus court chemin entre le noeud (0,0,etage_dep) et le noeud (nb_sorties,nb_entrees,)
     # nx.dijkstra_path_length(G,source = (0,0,0), target = (nb_sorties,nb_entrees,))
