@@ -55,7 +55,7 @@ def resolution_statique(l, requests, omega, tau, etage_dep):
 
 
 def fifo(sys): 
-    """Renvoie l'étage de la requête à traiter"""    
+    """Renvoie l'étage de la requête à traiter (sous forme d'une liste de longueur 1 pour coller avec le format de ignore)"""    
     # On détermine les requêtes pouvant être choisis
     possible_requests = []
     for q in sys.queues:
@@ -75,7 +75,7 @@ def fifo(sys):
     
 
 def replan(sys): 
-    """Renvoie l'étage de fin et le temps mis pour traiter la requête"""
+    """Renvoie l'étage de la requête à traiter"""
     from simulateur import L, TAU, OMEGA
     
     request = resolution_statique(L, sys.queue, OMEGA, TAU, sys.ascenseur.etage)[1] # Requête à traiter

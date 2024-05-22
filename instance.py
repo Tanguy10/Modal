@@ -32,7 +32,7 @@ def online(l,T,lamda):
 
 def create_request(id):
     """Création d'une requête aléatoire d'identifiant id"""
-    from simulateur import L, TAU, OMEGA, Request
+    from simulateur import L, Request
     b = bernoulli.rvs(0.5) # Stockage/Retrieval
     e = randint.rvs(1, L+1) #Etage
     if b==0:

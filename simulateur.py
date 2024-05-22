@@ -5,7 +5,7 @@ from instance import create_request
 from statistics import mean
 import matplotlib.pyplot as plt
 
-LAMBDA = 1 # Sert pour la loi exponentielle
+LAMBDA = 0.01 # Sert pour la loi exponentielle
 L = 10  # Nombre d'étages
 OMEGA = 1  # Temps mis par l'ascenseur pour passer d'un étage au suivant
 TAU = 1  # Temps mis par l'ascenseur pour charger ou décharger un colis
@@ -54,7 +54,7 @@ class Event_arrival(Event):
         request = sys.requests[-1] # Dernière requête 
         request.arrival = self.time # On actualise le temps d'arrivée
         sys.requests.append(request)  # Ajout à la file d'attente
-        d = expon.rvs(LAMBDA)  # Temps d'attente pour la prochaine requête
+        d = expon.rvs(scale= 1/LAMBDA)  # Temps d'attente pour la prochaine requête
         next_request = create_request(len(sys.requests))  # Prochaine requête
         sys.requests.append(next_request) # Ajout de cette requête à la liste des requêtes
         next = Event_arrival(self.time + d)  # Evénement associé
@@ -134,10 +134,11 @@ for i in range(NBR_RUNS):
     for r in sys.requests:
         if r.satisfaction_time != -1:
             sojourn_times_requests.append(r.satisfaction_time - r.arrival)
-            sojourn_mean.append(sojourn_times_requests[-1]/(len(sojourn_mean)+1))
-    sojourn_times_run.append(sojourn_mean[50:])
+            sojourn_mean.append(sum(sojourn_times_requests)/(len(sojourn_mean)+1))
+    sojourn_times_run.append(sojourn_mean)
 
 for s in sojourn_times_run:
     plt.plot(s)
 plt.show()
+
     
