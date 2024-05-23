@@ -23,7 +23,7 @@ def resolution_statique(sys):
 
     # Les états sont [i,j_1, ..., j_L,k] avec i les requêtes d'entrées traitées, j_i les requêtes de sorties de l'étage i 
     # et k l'étage où est l'ascenseur après la requête qu'il vient de traiter
-    states = itertools.product(range(nb_entrees+1), *(range(nb_sorties[i]+1) for i in range(L)), range(L+1+1))
+    states = itertools.product(range(nb_entrees+1), *(range(nb_sorties[i]+1) for i in range(L)), range(L+1))
     for state in states :
         G.add_node(state)
     print("Liste des noeuds créés:")
@@ -55,13 +55,13 @@ def resolution_statique(sys):
     noeuds_arrivee = [(nb_entrees, *nb_sorties,k) for k in range(L+1)]
 
     # Afficher les chemins et longueurs pour les nœuds d'arrivée spécifiés
-    noeud_sortie_min = noeuds_arrivee[0]
-    temps_sortie_min = longueurs[noeud_sortie_min]
-    chemin_min = chemins[noeud_sortie_min]
+    noeud_sortie_min = None
+    temps_sortie_min = float('inf')
+    chemin_min = None
+    
     for arrivee in noeuds_arrivee:
         if arrivee in longueurs and temps_sortie_min > longueurs[arrivee]:
-            noeud_sortie_min = noeuds_arrivee[arrivee]
-
+            noeud_sortie_min = arrivee
             temps_sortie_min = longueurs[noeud_sortie_min]
             chemin_min = chemins[noeud_sortie_min]
 
@@ -104,5 +104,5 @@ def replan(sys):
     chemin = resolution_statique(sys)
     for n in range(L+1):
         if chemin[1][n] != 0:
-            return [sys.queues[n][0]]
+            return [n]
     

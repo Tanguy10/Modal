@@ -109,7 +109,7 @@ class Event_satisfaction(Event):
             
 TOTAL_DURATION = 1000  # Temps d'un run
 TRANSIENT_DURATION = 1000 # Régime transitoire
-NBR_RUNS = 1
+NBR_RUNS = 5
 
 
 
