@@ -23,9 +23,11 @@ def resolution_statique(sys):
 
     # Les états sont [i,j_1, ..., j_L,k] avec i les requêtes d'entrées traitées, j_i les requêtes de sorties de l'étage i 
     # et k l'étage où est l'ascenseur après la requête qu'il vient de traiter
-    states = itertools.product(range(nb_entrees), *(range(nb_sorties[i]) for i in range(L)), range(L+1))
+    states = itertools.product(range(nb_entrees+1), *(range(nb_sorties[i]+1) for i in range(L)), range(L+1+1))
     for state in states :
         G.add_node(state)
+    print("Liste des noeuds créés:")
+    print(list(G.nodes()))
 
     # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}] 
     # ou [i, j_1, ..., j_n, ..., j_L,l] -> [i, j_1, ..., j_{n}+1, ..., j_L, 0]
@@ -57,7 +59,7 @@ def resolution_statique(sys):
     temps_sortie_min = longueurs[noeud_sortie_min]
     chemin_min = chemins[noeud_sortie_min]
     for arrivee in noeuds_arrivee:
-        if temps_sortie_min > longueurs[arrivee] :
+        if arrivee in longueurs and temps_sortie_min > longueurs[arrivee]:
             noeud_sortie_min = noeuds_arrivee[arrivee]
 
             temps_sortie_min = longueurs[noeud_sortie_min]
