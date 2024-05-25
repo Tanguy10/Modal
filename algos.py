@@ -26,8 +26,8 @@ def resolution_statique(sys):
     states = itertools.product(range(nb_entrees+1), *(range(nb_sorties[i]+1) for i in range(L)), range(L+1))
     for state in states :
         G.add_node(state)
-    print("Liste des noeuds créés:")
-    print(list(G.nodes()))
+    # print("Liste des noeuds créés:")
+    # print(list(G.nodes()))
 
     # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}] 
     # ou [i, j_1, ..., j_n, ..., j_L,l] -> [i, j_1, ..., j_{n}+1, ..., j_L, 0]
@@ -106,3 +106,14 @@ def replan(sys):
         if chemin[1][n] != 0:
             return [n]
     
+def ignore(sys):
+    from simulateur import L, TAU, OMEGA
+
+    chemin = resolution_statique(sys)
+    m = len(chemin)
+    list=[]
+    for i in range(m-1):
+        for n in range(L+1):
+            if chemin[i][n] != chemin[i+1][n]:
+                list.append(n)
+    return list
