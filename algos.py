@@ -99,7 +99,7 @@ def fifo(sys):
 
 def replan(sys): 
     """Renvoie l'étage de la requête à traiter"""
-    from simulateur import L, TAU, OMEGA
+    from simulateur import L
     
     chemin = resolution_statique(sys)
     for n in range(L+1):
@@ -107,43 +107,52 @@ def replan(sys):
             return [n]
     
 def ignore(sys):
-    from simulateur import L, TAU, OMEGA
+    """Renvoie la liste des étages des requêtes à traiter"""
+    from simulateur import L
 
     chemin = resolution_statique(sys)
     m = len(chemin)
-    list=[]
+    result = []
     for i in range(m-1):
         for n in range(L+1):
             if chemin[i][n] != chemin[i+1][n]:
-                list.append(n)
-    return list
+                result.append(n)
+    return result
 
 def greedy(sys):
-    # On détermine les requêtes pouvant être choisis
+    """Renvoie la requête demandant le moins de temps pour son exécution"""
     from simulateur import L, TAU, OMEGA
 
+    # On détermine les requêtes pouvant être choisis
     possible_requests = []
     for i in range(len(sys.queues)):
         if sys.queues[i] != []:
             possible_requests.append((sys.queues[i][0],i))
     etage_ascenceur = sys.ascenseur.etage #Etage de l'ascenseur
-    if possible_requests != []: # Si il existe une requête (n'importe où)
-        if L-etage_ascenceur < etage_ascenceur : # Une requète ne peux pas être plus loin
-            request_plus_proche = L
-        else :
-            request_plus_proche = 0
-        temps_plus_proche = 2*L*OMEGA +2*TAU
-        for x in possible_requests:
-            if x[0].etage != 0:
+
+
+    if possible_requests != []: # Si il existe une requête (n'importe où) -> c'est tout le temps le cas normalement car on appelle un algo seulement quand des requêtes sont en attente
+        
+        # Je pense que le test ci-dessous ne sert à rien 
+        # if L-etage_ascenceur < etage_ascenceur : # Une requête ne peux pas être plus loin
+        #     request_plus_proche = L
+        # else :
+        #     request_plus_proche = 0
+        
+        temps_plus_proche = 2*L*OMEGA +2*TAU + 1 # Temps supérieur (st) à toutes les requêtes pouvant être exécutées
+
+        for x in possible_requests: # Parcours des requêtes 
+            if x[0].sr == 'r': # Requête de sortie
                 temps = (abs(etage_ascenceur - x[0].etage) + x[0].etage) * OMEGA + 2 * TAU
                 if temps < temps_plus_proche:
                     request_plus_proche = x[1]
                     temps_plus_proche = temps
-        else :
-            temps = (etage_ascenceur + x[0].etage) * OMEGA + 2 * TAU
-            if temps < temps_plus_proche:
-                request_plus_proche = x[1]
-                temps_plus_proche = temps
+            else : # Requête de stockage
+                temps = (etage_ascenceur + x[0].etage) * OMEGA + 2 * TAU
+                if temps < temps_plus_proche:
+                    request_plus_proche = x[1]
+                    temps_plus_proche = temps
+        
         return [request_plus_proche]
     else :
         return []
