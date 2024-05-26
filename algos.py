@@ -117,3 +117,34 @@ def ignore(sys):
             if chemin[i][n] != chemin[i+1][n]:
                 list.append(n)
     return list
+
+def greedy(sys):
+    # On détermine les requêtes pouvant être choisis
+    from simulateur import L, TAU, OMEGA
+
+    possible_requests = []
+    for i in range(len(sys.queues)):
+        if sys.queues[i] != []:
+            possible_requests.append((sys.queues[i][0],i))
+    etage_ascenceur = sys.ascenseur.etage #Etage de l'ascenseur
+    if possible_requests != []: # Si il existe une requête (n'importe où)
+        if L-etage_ascenceur < etage_ascenceur : # Une requète ne peux pas être plus loin
+            request_plus_proche = L
+        else :
+            request_plus_proche = 0
+        temps_plus_proche = 2*L*OMEGA +2*TAU
+        for x in possible_requests:
+            if x[0].etage != 0:
+                temps = (abs(etage_ascenceur - x[0].etage) + x[0].etage) * OMEGA + 2 * TAU
+                if temps < temps_plus_proche:
+                    request_plus_proche = x[1]
+                    temps_plus_proche = temps
+        else :
+            temps = (etage_ascenceur + x[0].etage) * OMEGA + 2 * TAU
+            if temps < temps_plus_proche:
+                request_plus_proche = x[1]
+                temps_plus_proche = temps
+        return [request_plus_proche]
+    else :
+        return []
+            
