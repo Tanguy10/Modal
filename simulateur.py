@@ -4,9 +4,10 @@ import algos
 from instance import create_request
 from statistics import mean
 import matplotlib.pyplot as plt
+import numpy as np
 
-LAMBDA = 0.01 # Sert pour la loi exponentielle
-L = 10  # Nombre d'étages
+LAMBDA = 0.8 # Sert pour la loi exponentielle
+L = 5  # Nombre d'étages
 OMEGA = 1  # Temps mis par l'ascenseur pour passer d'un étage au suivant
 TAU = 1  # Temps mis par l'ascenseur pour charger ou décharger un colis
 
@@ -93,7 +94,7 @@ class Event_satisfaction(Event):
             sys.ascenseur.idle = False
             etage_courant = sys.ascenseur.etage
             temps_courant = self.time
-            indices = algos.replan(sys) # Suite des requêtes à traiter
+            indices = algos.ignore(sys) # Suite des requêtes à traiter
             for i in indices :
                 request = sys.queues[i].pop(0)
                 if request.sr == 's':
@@ -107,9 +108,9 @@ class Event_satisfaction(Event):
             sys.ascenseur.etage = etage_courant  # Ascenseur mis en position finale
             
             
-TOTAL_DURATION = 1000  # Temps d'un run
-TRANSIENT_DURATION = 1000 # Régime transitoire
-NBR_RUNS = 5
+TOTAL_DURATION = 800  # Temps d'un run
+TRANSIENT_DURATION = 300 # Régime transitoire
+NBR_RUNS = 20
 
 
 
@@ -139,8 +140,16 @@ for i in range(NBR_RUNS):
 
 plt.clf()
 for s in sojourn_times_run:
-    plt.plot(s)
+    plt.plot(s, alpha=0.2)
 
-plt.savefig('result.png')
+moyenne = []
+n = min([len(s) for s in sojourn_times_run])
+for i in range(n):
+    moyenne.append(mean(s[i] for s in sojourn_times_run))
+
+plt.title('Lambda : '+str(LAMBDA) + ', L : ' + str(L))
+plt.plot(moyenne)
+print(LAMBDA, L, moyenne[-1])
+plt.savefig('result_ignore.png')
 
     
