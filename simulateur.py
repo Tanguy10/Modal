@@ -108,8 +108,8 @@ class Event_satisfaction(Event):
             sys.ascenseur.etage = etage_courant  # Ascenseur mis en position finale
             
             
-TOTAL_DURATION = 800  # Temps d'un run
-TRANSIENT_DURATION = 300 # Régime transitoire
+TOTAL_DURATION = 8000  # Temps d'un run
+TRANSIENT_DURATION = 3000 # Régime transitoire
 NBR_RUNS = 20
 
 
