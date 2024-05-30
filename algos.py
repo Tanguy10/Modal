@@ -28,22 +28,24 @@ def resolution_statique(sys):
         G.add_node(state)
     # print("Liste des noeuds créés:")
     # print(list(G.nodes()))
+    nb_total_requests = nb_entrees + sum(nb_sorties)
 
     # Les arêtes sont [i,j_1,...,j_L,l] -> [i+1, j_1, ..., j_L, s_{i+1}] 
     # ou [i, j_1, ..., j_n, ..., j_L,l] -> [i, j_1, ..., j_{n}+1, ..., j_L, 0]
     for state in G.nodes():
         i, *j, k = state
+        facteur = nb_total_requests - i - sum(state[i] for i in range(1, L+1)) 
 
         if i < nb_entrees:
             next_state = (i+1, *j, sys.queues[0][i].etage)
-            G.add_edge(state, next_state, weight = 2*TAU + OMEGA * (k + sys.queues[0][i].etage))
+            G.add_edge(state, next_state, weight = (2*TAU + OMEGA * (k + sys.queues[0][i].etage))*facteur)
         
         for n in range(L):
             if j[n] < nb_sorties[n]:
                 j_copy = j.copy()
                 j_copy[n] += 1
                 next_state = (i, *j_copy, 0)
-                G.add_edge(state, next_state, weight = 2*TAU + OMEGA * (abs(n+1-k)+(n+1)))
+                G.add_edge(state, next_state, weight = (2*TAU + OMEGA * (abs(n+1-k)+(n+1)))*facteur)
 
 
     # Résolvons désormais le problème du plus court chemin entre le noeud (0,0,etage_dep) et le noeud (nb_sorties,nb_entrees,)
